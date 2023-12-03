@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Emergency Warning System</string>
+    <string name="ews">EWS</string>
+    <string name="settings_button">Settings Button</string>
+    <string name="settings">Settings</string>
+    <string name="back_button">Back Button</string>
+</resources>

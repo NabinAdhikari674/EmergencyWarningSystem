@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MainActivity"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:background="@color/black">
+
+        <androidx.appcompat.widget.Toolbar
+            app:layout_scrollFlags="scroll|enterAlways"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            >
+
+            <ImageButton
+                android:id="@+id/backToHomeButton"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_alignParentEnd="true"
+                android:backgroundTint="@color/black"
+                android:clickable="true"
+                android:contentDescription="@string/back_button"
+                android:gravity="center"
+                android:iconTint="@color/white"
+                android:scaleType="fitCenter"
+                android:scaleX="1.5"
+                android:scaleY="1.5"
+                android:src="@drawable/arrow_back"
+                app:rippleColor="@color/accentOrange"
+                app:tint="@color/white" />
+
+            <TextView
+                android:id="@+id/logoNameEWS"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginStart="28dp"
+                android:background="@color/black"
+                android:gravity="center"
+                android:text="@string/settings"
+                android:textColor="@color/white"
+                android:textSize="28sp"
+                android:textStyle="normal" />
+
+        </androidx.appcompat.widget.Toolbar>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:background="@color/accentOrange"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="25dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Allow Instant EWS Notifications"
+            android:textOff="No"
+            android:textOn="Yes"
+            android:textColor="@color/textColor" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+
+            android:background="#1C1C1C" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/textColor"
+            android:textSize="12sp"
+            android:text="By turning on, you will receive instant EWS notifications"
+            />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
