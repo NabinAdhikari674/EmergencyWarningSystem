@@ -1,8 +1,14 @@
 package com.leoindustries.emergencywarningsystem;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
+import androidx.annotation.NonNull;
+
+import java.io.Serializable;
 import java.util.List;
 
-public class ewsAlertDataModel {
+public class ewsAlertDataModel implements Parcelable {
 
     private String name;
     private String description;
@@ -94,5 +100,47 @@ public class ewsAlertDataModel {
         public String getContentUrl() {
             return contentUrl;
         }
+    }
+
+    public static final Parcelable.Creator<ewsAlertDataModel> CREATOR = new Parcelable.Creator<ewsAlertDataModel>() {
+        public ewsAlertDataModel createFromParcel(Parcel in) {
+            return new ewsAlertDataModel(in);
+        }
+
+        public ewsAlertDataModel[] newArray(int size) {
+            return new ewsAlertDataModel[size];
+        }
+    };
+
+    protected ewsAlertDataModel(Parcel in) {
+        // Read data from Parcel and populate your object's fields
+        name = in.readString();
+        description = in.readString();
+        url = in.readString();
+        in.readStringList(keywords);
+        license = in.readString();
+        dateCreated = in.readString();
+        dateModified = in.readString();
+        datePublished = in.readString();
+//        creator = in.readParcelable(Creator.class.getClassLoader());
+        in.readList(distribution, Distribution.class.getClassLoader());
+    }
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
+        dest.writeString(name);
+        dest.writeString(description);
+        dest.writeString(url);
+        dest.writeStringList(keywords);
+        dest.writeString(license);
+        dest.writeString(dateCreated);
+        dest.writeString(dateModified);
+        dest.writeString(datePublished);
+//        dest.writeParcelable(creator, flags);
+        dest.writeList(distribution);
     }
 }

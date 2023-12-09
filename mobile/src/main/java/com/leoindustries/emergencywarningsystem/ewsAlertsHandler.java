@@ -1,6 +1,9 @@
 package com.leoindustries.emergencywarningsystem;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -62,39 +66,49 @@ class alertAdapter extends RecyclerView.Adapter<alertViewHolder> {
 }
 
 public class ewsAlertsHandler extends AppCompatActivity {
-    private Context context;
+    public static final String ACTION_UPDATE_UI = "com.leoindustries.emergencywarningsystem.UPDATE_UI";
+    public static final String EXTRA_DATA_MODEL = "com.leoindustries.emergencywarningsystem.DATA_MODEL";
     RecyclerView alertRecyclerView;
-
-    public ewsAlertsHandler(Context context){
-        this.context = context;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.d("ewsLog: ewsAlertsHandler", "onCreate for ewsAlertsHandler");
+        LocalBroadcastManager.getInstance(this).registerReceiver(updateUIReceiver, new IntentFilter(ewsAlertsHandler.ACTION_UPDATE_UI));
 
         alertRecyclerView = findViewById(R.id.alertRecyclerView);
-        if(alertRecyclerView != null) {
-            Log.d("ewsLog: ewsAlertsHandler", "alertRecyclerView is NOT null !");
-        }
-        else {
-            Log.e("ewsLog: ewsAlertsHandler", "alertRecyclerView is null onCreate!");
-        }
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this.context);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         alertRecyclerView.setLayoutManager(layoutManager);
     }
 
-    public void handleResponse(ewsAlertDataModel data){
+    private BroadcastReceiver updateUIReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(ewsAlertsHandler.ACTION_UPDATE_UI)) {
+                // Handle the broadcast and update UI
+                ewsAlertDataModel data = intent.getParcelableExtra(ewsAlertsHandler.EXTRA_DATA_MODEL);
+                updateUIWithData(data);
+            }
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Unregister the receiver in onDestroy to avoid memory leaks
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(updateUIReceiver);
+    }
+
+    private void updateUIWithData(ewsAlertDataModel data) {
         Log.d("ewsLog: ewsAlertsHandler", "Data: " + data.getName());
         alertAdapter adapter = new alertAdapter(data);
-        if(alertRecyclerView != null){
+        if(alertRecyclerView != null) {
             alertRecyclerView.setAdapter(adapter);
+            Log.d("ewsLog: ewsAlertsHandler", "alertRecyclerView is NOT null on updateUIWithData !");
         }
-        else{
-            Log.e("ewsLog: ewsAlertsHandler", "alertRecyclerView is null !");
+        else {
+            Log.e("ewsLog: ewsAlertsHandler", "alertRecyclerView is null onCreate on updateUIWithData!");
         }
     }
 }

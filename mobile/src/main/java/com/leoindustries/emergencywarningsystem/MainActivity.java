@@ -19,8 +19,12 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        Intent ewsAlertsHandlerIntent = new Intent(this, ewsAlertsHandler.class);
+        ewsAlertsHandlerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(ewsAlertsHandlerIntent);
+
         // Start the API background service
-        startService( new Intent(this, ewsBackgroundService.class));
+        startService(new Intent(this, ewsBackgroundService.class));
 
         Log.d("ewsLog: MainActivity", "---------- Main activity started ----------");
     }

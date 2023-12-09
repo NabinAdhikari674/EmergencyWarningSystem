@@ -10,8 +10,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -47,10 +50,12 @@ public class ewsBackgroundService extends Service {
     private Context context;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-
-    private ewsAlertsHandler alertsHandler;
     private final NetworkManager networkManager = new NetworkManager();
     private final String channelId = "default_channel_id";
+
+    public static final String ACTION_UPDATE_UI = "com.leoindustries.emergencywarningsystem.UPDATE_UI";
+    public static final String EXTRA_DATA_MODEL = "com.leoindustries.emergencywarningsystem.DATA_MODEL";
+
 
     private final Runnable fetchApiRunnable = new Runnable() {
         @Override
@@ -63,7 +68,7 @@ public class ewsBackgroundService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        alertsHandler = new ewsAlertsHandler(this);
+
         createNotificationChannel();
         // Start fetching API data
         handler.post(fetchApiRunnable);
@@ -90,7 +95,7 @@ public class ewsBackgroundService extends Service {
                     Log.d("ewsLog: ewsBackgroundService", "API successfully fetched data");
                     ewsAlertDataModel data = response.body();
                     // Show notification with the fetched data
-                    alertsHandler.handleResponse(data);
+                    handleResponse(data);
                     showNotification(data);
                 }
             }
@@ -100,6 +105,17 @@ public class ewsBackgroundService extends Service {
                 Log.e("ewsLog: ewsBackgroundService", "Error on API call: "+ t.getMessage());
             }
         });
+    }
+
+    public void handleResponse(ewsAlertDataModel data){
+        Log.d("ewsLog: ewsBackgroundService", "Data sent to handle: " + data.getName());
+
+        // Create an intent with the action and data
+        Intent intent = new Intent(ACTION_UPDATE_UI);
+        intent.putExtra(EXTRA_DATA_MODEL, data);
+
+        // Send the broadcast
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void showNotification(ewsAlertDataModel data) {
