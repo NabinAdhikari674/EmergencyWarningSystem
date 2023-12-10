@@ -1,22 +1,18 @@
 package com.leoindustries.emergencywarningsystem;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 class alertViewHolder extends RecyclerView.ViewHolder {
     public TextView alertTitle;
@@ -33,9 +29,9 @@ class alertViewHolder extends RecyclerView.ViewHolder {
 }
 
 class alertAdapter extends RecyclerView.Adapter<alertViewHolder> {
-    private ewsAlertDataModel data;
+    private JSONArray data;
 
-    public alertAdapter(ewsAlertDataModel responseData) {
+    public alertAdapter(JSONArray responseData) {
         this.data = responseData;
     }
 
@@ -49,66 +45,52 @@ class alertAdapter extends RecyclerView.Adapter<alertViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull alertViewHolder holder, int position) {
-        String alertTitle = data.getName();
-        holder.alertTitle.setText(alertTitle);
+        for (int i = 0; i < data.length(); i++) {
+            try {
+                JSONObject jsonObject = data.getJSONObject(i);
+                String alertTitle = jsonObject.getString("location_name");
+                holder.alertTitle.setText(alertTitle);
 
-        String alertDescription = data.getDescription();
-        holder.alertDescription.setText(alertDescription);
+                String alertDescription = jsonObject.getString("msg");;
+                holder.alertDescription.setText(alertDescription);
 
-        String alertDatePublished = data.getDatePublished();
-        holder.alertDatePublished.setText(alertDatePublished);
+                String alertDatePublished = jsonObject.getString("create_date");
+                holder.alertDatePublished.setText(alertDatePublished);
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
+
 
     @Override
     public int getItemCount() {
-        return 1;
+        return data.length();
     }
+
 }
 
 public class ewsAlertsHandler extends AppCompatActivity {
     public static final String ACTION_UPDATE_UI = "com.leoindustries.emergencywarningsystem.UPDATE_UI";
     public static final String EXTRA_DATA_MODEL = "com.leoindustries.emergencywarningsystem.DATA_MODEL";
-    RecyclerView alertRecyclerView;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    public static void updateUIWithData(String rawData, RecyclerView alertRecyclerView) {
+        Log.d("ewsLog: ewsAlertsHandler", "Updating UI with new data");
+        try {
+            JSONObject data = new JSONObject(rawData);
+            JSONArray rowArray = data.getJSONArray("DisasterMsg")
+                    .getJSONObject(1)
+                    .getJSONArray("row");
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(updateUIReceiver, new IntentFilter(ewsAlertsHandler.ACTION_UPDATE_UI));
-
-        alertRecyclerView = findViewById(R.id.alertRecyclerView);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        alertRecyclerView.setLayoutManager(layoutManager);
-    }
-
-    private BroadcastReceiver updateUIReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ewsAlertsHandler.ACTION_UPDATE_UI)) {
-                // Handle the broadcast and update UI
-                ewsAlertDataModel data = intent.getParcelableExtra(ewsAlertsHandler.EXTRA_DATA_MODEL);
-                updateUIWithData(data);
+            alertAdapter adapter = new alertAdapter(rowArray);
+            if(alertRecyclerView != null) {
+                alertRecyclerView.setAdapter(adapter);
             }
-        }
-    };
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        // Unregister the receiver in onDestroy to avoid memory leaks
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(updateUIReceiver);
-    }
-
-    private void updateUIWithData(ewsAlertDataModel data) {
-        Log.d("ewsLog: ewsAlertsHandler", "Data: " + data.getName());
-        alertAdapter adapter = new alertAdapter(data);
-        if(alertRecyclerView != null) {
-            alertRecyclerView.setAdapter(adapter);
-            Log.d("ewsLog: ewsAlertsHandler", "alertRecyclerView is NOT null on updateUIWithData !");
-        }
-        else {
-            Log.e("ewsLog: ewsAlertsHandler", "alertRecyclerView is null onCreate on updateUIWithData!");
+            else {
+                Log.w("ewsLog: ewsAlertsHandler", "alertRecyclerView is NULL on ewsAlertsHandler.updateUIWithData");
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         }
     }
 }

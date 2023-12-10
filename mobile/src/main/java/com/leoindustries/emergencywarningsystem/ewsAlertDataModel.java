@@ -2,145 +2,213 @@ package com.leoindustries.emergencywarningsystem;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import androidx.annotation.NonNull;
-
-import java.io.Serializable;
 import java.util.List;
 
 public class ewsAlertDataModel implements Parcelable {
 
-    private String name;
-    private String description;
-    private String url;
-    private List<String> keywords;
-    private String license;
-    private String dateCreated;
-    private String dateModified;
-    private String datePublished;
-    private Creator creator;
-    private List<Distribution> distribution;
+    private List<Head> heads;
+    private List<Row> rows;
 
-    // Getters for all the fields
-
-    public String getName() {
-        return name;
+    public List<Head> getHeads() {
+        return heads;
     }
 
-    public String getDescription() {
-        return description;
+    public List<Row> getRows() {
+        return rows;
     }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public List<String> getKeywords() {
-        return keywords;
-    }
-
-    public String getLicense() {
-        return license;
-    }
-
-    public String getDateCreated() {
-        return dateCreated;
-    }
-
-    public String getDateModified() {
-        return dateModified;
-    }
-
-    public String getDatePublished() {
-        return datePublished;
-    }
-
-    public Creator getCreator() {
-        return creator;
-    }
-
-    public List<Distribution> getDistribution() {
-        return distribution;
-    }
-
-    public static class Creator {
-        private String name;
-        private ContactPoint contactPoint;
-
-        public String getName() {
-            return name;
-        }
-
-        public ContactPoint getContactPoint() {
-            return contactPoint;
-        }
-    }
-
-    public static class ContactPoint {
-        private String contactType;
-        private String telephone;
-
-        public String getContactType() {
-            return contactType;
-        }
-
-        public String getTelephone() {
-            return telephone;
-        }
-    }
-
-    public static class Distribution {
-        private String encodingFormat;
-        private String contentUrl;
-
-        public String getEncodingFormat() {
-            return encodingFormat;
-        }
-
-        public String getContentUrl() {
-            return contentUrl;
-        }
-    }
-
-    public static final Parcelable.Creator<ewsAlertDataModel> CREATOR = new Parcelable.Creator<ewsAlertDataModel>() {
-        public ewsAlertDataModel createFromParcel(Parcel in) {
-            return new ewsAlertDataModel(in);
-        }
-
-        public ewsAlertDataModel[] newArray(int size) {
-            return new ewsAlertDataModel[size];
-        }
-    };
 
     protected ewsAlertDataModel(Parcel in) {
-        // Read data from Parcel and populate your object's fields
-        name = in.readString();
-        description = in.readString();
-        url = in.readString();
-        in.readStringList(keywords);
-        license = in.readString();
-        dateCreated = in.readString();
-        dateModified = in.readString();
-        datePublished = in.readString();
-//        creator = in.readParcelable(Creator.class.getClassLoader());
-        in.readList(distribution, Distribution.class.getClassLoader());
+        heads = in.createTypedArrayList(Head.CREATOR);
+        rows = in.createTypedArrayList(Row.CREATOR);
     }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeTypedList(heads);
+        dest.writeTypedList(rows);
+    }
+
     @Override
     public int describeContents() {
         return 0;
     }
 
-    @Override
-    public void writeToParcel(@NonNull Parcel dest, int flags) {
-        dest.writeString(name);
-        dest.writeString(description);
-        dest.writeString(url);
-        dest.writeStringList(keywords);
-        dest.writeString(license);
-        dest.writeString(dateCreated);
-        dest.writeString(dateModified);
-        dest.writeString(datePublished);
-//        dest.writeParcelable(creator, flags);
-        dest.writeList(distribution);
+    public static final Creator<ewsAlertDataModel> CREATOR = new Creator<ewsAlertDataModel>() {
+        @Override
+        public ewsAlertDataModel createFromParcel(Parcel in) {
+            return new ewsAlertDataModel(in);
+        }
+
+        @Override
+        public ewsAlertDataModel[] newArray(int size) {
+            return new ewsAlertDataModel[size];
+        }
+    };
+
+    public static class Head implements Parcelable {
+
+        private int totalCount;
+        private int numOfRows;
+        private int pageNo;
+        private RESULT result;
+
+        public int getTotalCount() {
+            return totalCount;
+        }
+
+        public int getNumOfRows() {
+            return numOfRows;
+        }
+
+        public int getPageNo() {
+            return pageNo;
+        }
+
+        public RESULT getResult() {
+            return result;
+        }
+
+        protected Head(Parcel in) {
+            totalCount = in.readInt();
+            numOfRows = in.readInt();
+            pageNo = in.readInt();
+            result = in.readParcelable(RESULT.class.getClassLoader());
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(totalCount);
+            dest.writeInt(numOfRows);
+            dest.writeInt(pageNo);
+            dest.writeParcelable(result, flags);
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        public static final Creator<Head> CREATOR = new Creator<Head>() {
+            @Override
+            public Head createFromParcel(Parcel in) {
+                return new Head(in);
+            }
+
+            @Override
+            public Head[] newArray(int size) {
+                return new Head[size];
+            }
+        };
+
+        public static class RESULT implements Parcelable {
+
+            private String resultCode;
+            private String resultMsg;
+
+            public String getResultCode() {
+                return resultCode;
+            }
+
+            public String getResultMsg() {
+                return resultMsg;
+            }
+
+            protected RESULT(Parcel in) {
+                resultCode = in.readString();
+                resultMsg = in.readString();
+            }
+
+            @Override
+            public void writeToParcel(Parcel dest, int flags) {
+                dest.writeString(resultCode);
+                dest.writeString(resultMsg);
+            }
+
+            @Override
+            public int describeContents() {
+                return 0;
+            }
+
+            public static final Creator<RESULT> CREATOR = new Creator<RESULT>() {
+                @Override
+                public RESULT createFromParcel(Parcel in) {
+                    return new RESULT(in);
+                }
+
+                @Override
+                public RESULT[] newArray(int size) {
+                    return new RESULT[size];
+                }
+            };
+        }
+    }
+
+    public static class Row implements Parcelable {
+        private String create_date;
+        private String location_id;
+        private String location_name;
+        private String md101_sn;
+        private String msg;
+        private String send_platform;
+
+        public String getCreate_date() {
+            return create_date;
+        }
+
+        public String getLocation_id() {
+            return location_id;
+        }
+
+        public String getLocation_name() {
+            return location_name;
+        }
+
+        public String getMd101_sn() {
+            return md101_sn;
+        }
+
+        public String getMsg() {
+            return msg;
+        }
+
+        public String getSend_platform() {
+            return send_platform;
+        }
+
+        protected Row(Parcel in) {
+            create_date = in.readString();
+            location_id = in.readString();
+            location_name = in.readString();
+            md101_sn = in.readString();
+            msg = in.readString();
+            send_platform = in.readString();
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeString(create_date);
+            dest.writeString(location_id);
+            dest.writeString(location_name);
+            dest.writeString(md101_sn);
+            dest.writeString(msg);
+            dest.writeString(send_platform);
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        public static final Creator<Row> CREATOR = new Creator<Row>() {
+            @Override
+            public Row createFromParcel(Parcel in) {
+                return new Row(in);
+            }
+
+            @Override
+            public Row[] newArray(int size) {
+                return new Row[size];
+            }
+        };
     }
 }
