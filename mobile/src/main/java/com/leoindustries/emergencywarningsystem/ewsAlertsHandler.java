@@ -75,7 +75,7 @@ public class ewsAlertsHandler extends AppCompatActivity {
     public static final String EXTRA_DATA_MODEL = "com.leoindustries.emergencywarningsystem.DATA_MODEL";
 
     public static void updateUIWithData(String rawData, RecyclerView alertRecyclerView) {
-        Log.d("ewsLog: ewsAlertsHandler", "Updating UI with new data");
+        Log.d("ewsLog: ewsAlertsHandler", "Updating UI with data");
         try {
             JSONObject data = new JSONObject(rawData);
             JSONArray rowArray = data.getJSONArray("DisasterMsg")

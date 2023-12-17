@@ -29,7 +29,6 @@ public class Settings extends AppCompatActivity {
             Intent intent = new Intent(Settings.this, MainActivity.class);
             startActivity(intent);
         });
-
         notificationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -45,5 +44,7 @@ public class Settings extends AppCompatActivity {
                 }
             }
         });
+
+        Log.d("ewsLog: Settings", "---------- Settings activity started ----------");
     }
 }

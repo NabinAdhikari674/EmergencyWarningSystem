@@ -17,6 +17,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.google.gson.GsonBuilder;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -37,8 +39,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 interface ewsInterfaceAPI {
-//    @GET("openapi.json")
-//    Call<ewsAlertDataModel> fetchData();
     @GET("getDisasterMsg1List")
     Call<Object> fetchData(
         @Query("ServiceKey") String serviceKey,
@@ -60,11 +60,12 @@ class NetworkManager {
                 .readTimeout(30, TimeUnit.SECONDS);
 //        httpClient.addInterceptor(loggingInterceptor);
         httpClient.addInterceptor(new Interceptor() {
+            @NonNull
             @Override
-            public okhttp3.Response intercept(Chain chain) throws IOException {
+            public okhttp3.Response intercept(@NonNull Chain chain) throws IOException {
                 Request original = chain.request();
                 Request.Builder requestBuilder = original.newBuilder()
-//                        .header("Header1", "Value1")  // Add your headers here
+                        .header("Content-Type", "application/json")  // Add your headers here
                         .method(original.method(), original.body());
                 Request request = requestBuilder.build();
                 return chain.proceed(request);
@@ -73,7 +74,7 @@ class NetworkManager {
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://apis.data.go.kr/1741000/DisasterMsg3/") // Replace with your API base URL
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder().setLenient().create())) // Set lenient true by: new GsonBuilder().setLenient().create()
                 .client(httpClient.build())
                 .build();
 
@@ -91,6 +92,8 @@ class NetworkManager {
 }
 
 public class ewsBackgroundService extends Service {
+    SharedPreferences preferences;
+    SharedPreferences.Editor editor;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final NetworkManager networkManager = new NetworkManager();
     private final String channelId = "com.leoindustries.emergencywarningsystem.notification_channel_id";
@@ -99,13 +102,16 @@ public class ewsBackgroundService extends Service {
         @Override
         public void run() {
             fetchDataFromApi();
-            handler.postDelayed(this, 20 * 1000); // Fetch every 30 seconds
+            handler.postDelayed(this, 30 * 1000); // Fetch every 30 seconds
         }
     };
 
     @Override
     public void onCreate() {
         super.onCreate();
+        preferences = getSharedPreferences("com.leoindustries.emergencywarningsystem.UI", Context.MODE_PRIVATE);
+        editor = preferences.edit();
+
         createNotificationChannel();
         handler.post(fetchApiRunnable);
     }
@@ -147,9 +153,11 @@ public class ewsBackgroundService extends Service {
         // Create an intent with the action and data
         Intent intent = new Intent(ewsAlertsHandler.ACTION_UPDATE_UI);
         intent.putExtra(ewsAlertsHandler.EXTRA_DATA_MODEL, data.toString());
-
         // Send the broadcast
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+        // Save current data in persist storage
+        editor.putString("alertsData", data.toString());
+        editor.apply();
     }
 
     private void handleNotifications(JSONObject data){
@@ -170,7 +178,7 @@ public class ewsBackgroundService extends Service {
 
             Intent intent = new Intent(this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
             Notification notification = new NotificationCompat.Builder(this, channelId)
                     .setContentTitle(firstElement.getString("location_name"))

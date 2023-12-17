@@ -8,24 +8,27 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.Objects;
+
 
 public class MainActivity extends AppCompatActivity {
-    public static final String ACTION_UPDATE_UI = "com.leoindustries.emergencywarningsystem.UPDATE_UI";
-    public static final String EXTRA_DATA_MODEL = "com.leoindustries.emergencywarningsystem.DATA_MODEL";
-
     static RecyclerView alertRecyclerView;
+    SharedPreferences preferences;
+    SharedPreferences.Editor editor;
+    String currentData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        preferences = getSharedPreferences("com.leoindustries.emergencywarningsystem.UI", Context.MODE_PRIVATE);
+        editor = preferences.edit();
 
         alertRecyclerView = findViewById(R.id.alertRecyclerView);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -44,12 +47,12 @@ public class MainActivity extends AppCompatActivity {
         Log.d("ewsLog: MainActivity", "---------- Main activity started ----------");
     }
 
-    private BroadcastReceiver updateUIReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver updateUIReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(ewsAlertsHandler.ACTION_UPDATE_UI)) {
-                String data = intent.getStringExtra(ewsAlertsHandler.EXTRA_DATA_MODEL);
-                ewsAlertsHandler.updateUIWithData(data, alertRecyclerView);
+            if (Objects.equals(intent.getAction(), ewsAlertsHandler.ACTION_UPDATE_UI)) {
+                currentData = intent.getStringExtra(ewsAlertsHandler.EXTRA_DATA_MODEL);
+                ewsAlertsHandler.updateUIWithData(currentData, alertRecyclerView);
             }
         }
     };
@@ -66,14 +69,25 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(updateUIReceiver);
     }
 
-    private boolean isSettingsActivityRunning() {
-//        return SettingsActivity.isRunning();
-        return false;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        String savedData = preferences.getString("alertsData", "");
+        if(!savedData.equals("")) {
+            ewsAlertsHandler.updateUIWithData(savedData, alertRecyclerView);
+        }
+//        Log.d("ewsLog: MainActivity", "---------- resumed with data ----------: " + savedData);
     }
 
-    private void bringSettingsActivityToFront() {
-//        SettingsActivity.bringToFront();
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        editor.putString("alertsData", currentData);
+//        editor.apply();
+//        Log.d("ewsLog: MainActivity", "---------- pause ----------:" + currentData);
     }
+
+
 }
 
 
