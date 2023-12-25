@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -29,19 +28,16 @@ public class Settings extends AppCompatActivity {
             Intent intent = new Intent(Settings.this, MainActivity.class);
             startActivity(intent);
         });
-        notificationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                SharedPreferences.Editor editor = preferences.edit();
-                if (isChecked) {
-                    editor.putBoolean("allowNotifications", true);
-                    editor.apply();
-                    Log.d("ewsLog: Settings", "Toggled to allow notifications: switch is ON");
-                } else {
-                    editor.putBoolean("allowNotifications", false);
-                    editor.apply();
-                    Log.d("ewsLog: Settings", "Toggled to NOT allow notifications: switch is OFF");
-                }
+        notificationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            SharedPreferences.Editor editor = preferences.edit();
+            if (isChecked) {
+                editor.putBoolean("allowNotifications", true);
+                editor.apply();
+                Log.d("ewsLog: Settings", "Toggled to allow notifications: switch is ON");
+            } else {
+                editor.putBoolean("allowNotifications", false);
+                editor.apply();
+                Log.d("ewsLog: Settings", "Toggled to NOT allow notifications: switch is OFF");
             }
         });
 

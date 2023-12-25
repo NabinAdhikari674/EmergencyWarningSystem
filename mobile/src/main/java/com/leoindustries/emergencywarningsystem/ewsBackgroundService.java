@@ -19,11 +19,13 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.google.gson.GsonBuilder;
 
-import java.io.IOException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import retrofit2.Call;
@@ -33,10 +35,6 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 interface ewsInterfaceAPI {
     @GET("getDisasterMsg1List")
@@ -59,17 +57,13 @@ class NetworkManager {
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS);
 //        httpClient.addInterceptor(loggingInterceptor);
-        httpClient.addInterceptor(new Interceptor() {
-            @NonNull
-            @Override
-            public okhttp3.Response intercept(@NonNull Chain chain) throws IOException {
-                Request original = chain.request();
-                Request.Builder requestBuilder = original.newBuilder()
-                        .header("Content-Type", "application/json")  // Add your headers here
-                        .method(original.method(), original.body());
-                Request request = requestBuilder.build();
-                return chain.proceed(request);
-            }
+        httpClient.addInterceptor(chain -> {
+            Request original = chain.request();
+            Request.Builder requestBuilder = original.newBuilder()
+                    .header("Content-Type", "application/json")  // Add your headers here
+                    .method(original.method(), original.body());
+            Request request = requestBuilder.build();
+            return chain.proceed(request);
         });
 
         Retrofit retrofit = new Retrofit.Builder()
@@ -92,8 +86,14 @@ class NetworkManager {
 }
 
 public class ewsBackgroundService extends Service {
-    SharedPreferences preferences;
-    SharedPreferences.Editor editor;
+    SharedPreferences tab1Data;
+    SharedPreferences tab2Data;
+    SharedPreferences tab3Data;
+
+    SharedPreferences.Editor editorTab1;
+    SharedPreferences.Editor editorTab2;
+    SharedPreferences.Editor editorTab3;
+
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final NetworkManager networkManager = new NetworkManager();
     private final String channelId = "com.leoindustries.emergencywarningsystem.notification_channel_id";
@@ -109,11 +109,18 @@ public class ewsBackgroundService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        preferences = getSharedPreferences("com.leoindustries.emergencywarningsystem.UI", Context.MODE_PRIVATE);
-        editor = preferences.edit();
+        tab1Data = getSharedPreferences("com.leoindustries.emergencywarningsystem.Tab1", Context.MODE_PRIVATE);
+        tab2Data = getSharedPreferences("com.leoindustries.emergencywarningsystem.Tab2", Context.MODE_PRIVATE);
+        tab3Data = getSharedPreferences("com.leoindustries.emergencywarningsystem.Tab3", Context.MODE_PRIVATE);
+
+        editorTab1 = tab1Data.edit();
+        editorTab2 = tab2Data.edit();
+        editorTab3 = tab3Data.edit();
 
         createNotificationChannel();
         handler.post(fetchApiRunnable);
+
+        Log.d("ewsLog: ewsBackgroundService", "---------- Background Service started ----------");
     }
 
     @Override
@@ -135,6 +142,7 @@ public class ewsBackgroundService extends Service {
             public void onResponse(@NonNull Call<Object> call, @NonNull Response<Object> response) {
                 if (response.isSuccessful()) {
                     Object dataMap = response.body();
+                    assert dataMap != null;
                     JSONObject dataJSON = new JSONObject((Map) dataMap);
                     Log.d("ewsLog: ewsBackgroundService", "API successfully fetched data");
                     handleResponse(dataJSON);
@@ -143,21 +151,38 @@ public class ewsBackgroundService extends Service {
             }
 
             @Override
-            public void onFailure(Call<Object> call, Throwable t) {
+            public void onFailure(@NonNull Call<Object> call, @NonNull Throwable t) {
                 Log.e("ewsLog: ewsBackgroundService", "Error on API call: "+ t.getMessage());
             }
         });
     }
 
-    public void handleResponse(JSONObject data){
+    public void handleResponse(JSONObject rawData) {
         // Create an intent with the action and data
+        JSONObject data = ewsAlertsHandler.separateAlertData(rawData);
+
+        String min30;
+        String hour1;
+        String hour2;
+        try {
+            min30 = String.valueOf(data.getJSONArray("min30"));
+            hour1 = String.valueOf(data.getJSONArray("hour1"));
+            hour2 = String.valueOf(data.getJSONArray("hour2"));
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
         Intent intent = new Intent(ewsAlertsHandler.ACTION_UPDATE_UI);
         intent.putExtra(ewsAlertsHandler.EXTRA_DATA_MODEL, data.toString());
         // Send the broadcast
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         // Save current data in persist storage
-        editor.putString("alertsData", data.toString());
-        editor.apply();
+        editorTab1.putString("alertsData", min30);
+        editorTab1.apply();
+        editorTab2.putString("alertsData", hour1);
+        editorTab2.apply();
+        editorTab3.putString("alertsData", hour2);
+        editorTab3.apply();
     }
 
     private void handleNotifications(JSONObject data){
